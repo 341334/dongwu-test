@@ -1,0 +1,971 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>你适合养什么动物</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+    background: linear-gradient(170deg, #fff6f1 0%, #ffeef2 48%, #f6efff 100%);
+    color: #4a3532;
+    display: flex;
+    justify-content: center;
+  }
+  .phone {
+    width: 100%; max-width: 480px; min-height: 100vh;
+    display: flex; flex-direction: column; padding: 20px 18px 32px;
+    filter: contrast(1.06) saturate(1.1);
+  }
+  .view { display: none; flex: 1; flex-direction: column; }
+  .view.active { display: flex; animation: fadeIn .35s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* ===== 开始页 ===== */
+  .hero { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; gap: 18px; }
+  .hero-img { width: 86%; max-width: 320px; border-radius: 26px; box-shadow: 0 14px 34px rgba(255,150,170,.22); filter: contrast(1.02) saturate(1.12); }
+  .intro-note { margin-top: auto; margin-bottom: 9vh; }
+  .hero .badge { font-size: 13px; letter-spacing: 1px; color: #ff7a9c; background: rgba(255,255,255,.7); padding: 6px 14px; border-radius: 999px; }
+  .hero h1 { font-size: 28px; line-height: 1.4; font-weight: 800; color: #5a3a38; }
+  .hero p { font-size: 15px; color: #a08a85; line-height: 1.7; }
+
+  /* ===== 答题页：进度卡片 ===== */
+  .progress-card { background: #fff; border-radius: 22px; padding: 18px 20px; box-shadow: 0 6px 20px rgba(255,150,170,.12); margin-bottom: 18px; }
+  .progress-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  .progress-cat { font-size: 15px; font-weight: 700; color: #ff7a9c; }
+  .progress-num { font-size: 14px; color: #a08a85; font-weight: 600; }
+  .progress { position: relative; height: 14px; background: #f3e6ea; border-radius: 999px; overflow: hidden; }
+  .progress-bar { position: relative; height: 100%; width: 0; border-radius: 999px; background: linear-gradient(90deg, #ff9eb5, #ffb88a); transition: width .3s ease; }
+  .paw-layer { position: absolute; inset: 0; display: flex; justify-content: space-between; align-items: center; padding: 0 10px; pointer-events: none; }
+  .paw-layer span { font-size: 10px; color: #fff; opacity: .8; }
+
+  /* ===== 答题页：题目卡片 ===== */
+  .quiz-card { background: #fff; border-radius: 28px; padding: 24px 20px; box-shadow: 0 10px 30px rgba(255,150,170,.14); flex: 1; }
+  .question { font-size: 22px; font-weight: 800; line-height: 1.5; margin-bottom: 24px; color: #4a3532; }
+  .options { display: flex; flex-direction: column; gap: 14px; }
+  .option {
+    background: #fdf3f5; border: 2px solid transparent; border-radius: 18px;
+    padding: 17px 18px; font-size: 16px; text-align: left; cursor: pointer;
+    transition: all .2s ease;
+    display: flex; align-items: center; gap: 14px; color: #4a3532;
+  }
+  .option .key { width: 22px; height: 22px; border-radius: 50%; border: 2px solid #f3c2cd; background: #fff; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .option:active { background: #fbeef0; }
+  .option.selected { border-color: #ff9eb5; background: #fff; }
+  .option.selected .key { border-color: #ff7a9c; }
+  .option.selected .key::after { content: ''; width: 10px; height: 10px; border-radius: 50%; background: #ff7a9c; }
+  .quiz-nav { display: flex; align-items: center; gap: 12px; margin-top: 26px; }
+  .nav-btn { flex: 1; padding: 14px; border: 1.5px solid #ffd9e1; border-radius: 16px; font-size: 16px; font-weight: 600; cursor: pointer; background: #fff; color: #ff7a9c; }
+  .nav-btn:disabled { opacity: .4; cursor: not-allowed; }
+  .nav-tip { flex: 1; text-align: center; font-size: 13px; color: #a08a85; }
+
+  /* ===== 结果页 ===== */
+  .result-card {
+    background: #fff; border-radius: 28px; padding: 28px 22px; text-align: center;
+    box-shadow: 0 10px 30px rgba(255,150,170,.16); margin-top: 12px;
+  }
+  .result-badge { display: inline-block; font-size: 13px; font-weight: 600; letter-spacing: .5px; color: #ff7a9c; background: #ffeef1; padding: 6px 14px; border-radius: 999px; margin-bottom: 16px; }
+  .result-img { width: 60%; max-width: 230px; border-radius: 22px; margin-bottom: 16px; filter: contrast(1.07) saturate(1.12); }
+  .result-name { font-size: 26px; font-weight: 800; margin-bottom: 6px; color: #4a3532; }
+  .result-sub { font-size: 14px; color: #c98a9a; margin-bottom: 16px; }
+  .result-tags { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-bottom: 20px; }
+  .tag { font-size: 13px; font-weight: 500; color: #ff6b93; background: #ffe4ec; padding: 6px 12px; border-radius: 999px; }
+  .result-block { text-align: left; margin-bottom: 16px; }
+  .result-block:last-child { margin-bottom: 0; }
+  .block-title { font-size: 15px; font-weight: 700; color: #5a3a38; margin-bottom: 10px; }
+  .result-desc { font-size: 15px; color: #5d4a46; line-height: 1.85; background: #fff6f7; border-radius: 16px; padding: 16px; }
+  .result-tip { font-size: 15px; color: #5d4a46; line-height: 1.85; background: #fff7f0; border-radius: 16px; padding: 16px; }
+
+  .btn {
+    margin-top: 26px; width: 100%; padding: 13px; border: none; border-radius: 14px;
+    font-size: 16px; font-weight: 700; color: #fff; cursor: pointer;
+    background: linear-gradient(135deg, #ff9eb5, #ffb88a); box-shadow: 0 8px 20px rgba(255,150,140,.3);
+  }
+  .btn.ghost { background: #fff; color: #ff7a9c; box-shadow: none; border: 1.5px solid #ffd9e1; }
+  .btn-row { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
+  .btn-row .btn { margin-top: 0; }
+  .disclaimer { font-size: 12px; color: #b39a95; line-height: 1.7; text-align: center; margin-top: 16px; padding: 0 10px; }
+
+  /* ===== 图片预览弹层 ===== */
+  .preview-mask { position: fixed; inset: 0; background: rgba(40,30,35,.72); display: none; flex-direction: column; align-items: center; justify-content: center; padding: 24px; z-index: 99; }
+  .preview-mask.active { display: flex; }
+  .preview-mask img { max-width: 100%; max-height: 72vh; border-radius: 20px; box-shadow: 0 12px 40px rgba(0,0,0,.3); }
+  .preview-tip { color: #fff; font-size: 14px; margin-top: 16px; }
+  .preview-close { margin-top: 14px; background: rgba(255,255,255,.18); color: #fff; border: none; padding: 10px 22px; border-radius: 999px; font-size: 15px; cursor: pointer; }
+</style>
+<script src="https://fastly.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+</head>
+<body>
+<div class="phone">
+
+  <!-- ===== 视图：开始 ===== -->
+  <section class="view active" id="view-intro">
+    <div class="hero">
+      <img class="hero-img" src="assets/cover.png" alt="你适合养什么动物 测试封面">
+      <button class="btn" onclick="startQuiz()">开始测试</button>
+      <div class="disclaimer intro-note">测试结果仅供娱乐参考</div>
+    </div>
+  </section>
+
+  <!-- ===== 视图：答题 ===== -->
+  <section class="view" id="view-quiz">
+    <div class="progress-card">
+      <div class="progress-head">
+        <span class="progress-cat">🐾 答题进度</span>
+        <span class="progress-num"><span id="stepText">1/20</span></span>
+      </div>
+      <div class="progress">
+        <div class="progress-bar" id="progressBar"></div>
+        <div class="paw-layer">
+          <span>🐾</span><span>🐾</span><span>🐾</span><span>🐾</span><span>🐾</span>
+        </div>
+      </div>
+    </div>
+    <div class="quiz-card">
+      <div class="question" id="questionText"></div>
+      <div class="options" id="optionsBox"></div>
+      <div class="quiz-nav">
+        <button class="nav-btn ghost" id="prevBtn" onclick="prevQuestion()">上一题</button>
+        <span class="nav-tip">选择后自动进入下一题</span>
+        <button class="nav-btn ghost" id="nextBtn" onclick="nextQuestion()">下一题</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 视图：结果 ===== -->
+  <section class="view" id="view-result">
+    <div class="result-card">
+      <div class="result-badge">你的本命宠物是</div>
+      <img class="result-img" id="resImg" src="" alt="测试结果动物">
+      <div class="result-name" id="resName"></div>
+      <div class="result-sub" id="resSub"></div>
+      <div class="result-tags" id="resTags"></div>
+      <div class="result-block">
+        <div class="block-title">✨ 为什么最适合你</div>
+        <div class="result-desc" id="resDesc"></div>
+      </div>
+      <div class="result-block">
+        <div class="block-title">💡 相处小建议</div>
+        <div class="result-tip" id="resTip"></div>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn" onclick="saveImage()">点击保存</button>
+      <button class="btn ghost" onclick="restart()">再测一测</button>
+    </div>
+    <div class="disclaimer">本测试仅供娱乐参考</div>
+  </section>
+
+</div>
+
+<!-- 结果图预览弹层 -->
+<div class="preview-mask" id="previewMask" onclick="closePreview()">
+  <img id="previewImg" alt="测试结果图">
+  <div class="preview-tip">长按图片即可保存到相册</div>
+  <button class="preview-close" onclick="closePreview()">关闭</button>
+</div>
+
+<script>
+/* ============================================================
+ *  配置区：题目与结果都在这里修改
+ *  score 的 key 对应 results 里的结果编号
+ * ============================================================ */
+const CONFIG = {
+  questions: [
+    {
+        "q": "周末终于有空，你更想怎么过？",
+        "options": [
+            {
+                "text": "安安静静待着，有人陪着就好",
+                "score": {
+                    "cat": 1
+                }
+            },
+            {
+                "text": "约朋友出门，热闹才开心",
+                "score": {
+                    "dog": 1
+                }
+            },
+            {
+                "text": "摆弄小物件、布置小角落，自得其乐",
+                "score": {
+                    "hamster": 1
+                }
+            },
+            {
+                "text": "温柔地做点喜欢的小事，慢慢放松",
+                "score": {
+                    "rabbit": 1
+                }
+            }
+        ]
+    },
+    {
+        "q": "你白天独自在家的时间大概是？",
+        "options": [
+            {
+                "text": "在家节奏慢，不急不赶",
+                "score": {
+                    "turtle": 1
+                }
+            },
+            {
+                "text": "在家看看水景发呆，享受安静",
+                "score": {
+                    "fish": 1
+                }
+            },
+            {
+                "text": "在家也想有个会搭理我的伴儿",
+                "score": {
+                    "parrot": 1
+                }
+            },
+            {
+                "text": "在家独处，按自己节奏来",
+                "score": {
+                    "hedgehog": 1
+                }
+            }
+        ]
+    },
+    {
+        "q": "你的居住空间更像哪种？",
+        "options": [
+            {
+                "text": "空间宽敞，有活动区域",
+                "score": {
+                    "dog": 1
+                }
+            },
+            {
+                "text": "狭小单间，只能放个小笼子",
+                "score": {
+                    "hamster": 1
+                }
+            },
+            {
+                "text": "普通房间，够摆一个小窝",
+                "score": {
+                    "rabbit": 1
+                }
+            },
+            {
+                "text": "不大，但能长期安稳住下",
+                "score": {
+                    "turtle": 1
+                }
+            }
+        ]
+    },
+    {
+        "q": "每月愿意为宠物花多少心思和开销？",
+        "options": [
+            {
+                "text": "主要花在环境布置和观赏装备上",
+                "score": {
+                    "fish": 1
+                }
+            },
+            {
+                "text": "愿意花钱买小玩具，逗它互动",
+                "score": {
+                    "parrot": 1
+                }
+            },
+            {
+                "text": "愿意研究装备，为它配齐用品",
+                "score": {
+                    "hedgehog": 1
+                }
+            },
+            {
+                "text": "适中投入，日常开销就够",
+                "score": {
+                    "cat": 1
+                }
+            }
+        ]
+    },
+    {
+        "q": "朋友最常这样评价你？",
+        "options": [
+            {
+                "text": "软萌好相处，让人放松",
+                "score": {
+                    "hamster": 1
+                }
+            },
+            {
+                "text": "温柔细心，很会照顾人",
+                "score": {
+                    "rabbit": 1
+                }
+            },
+            {
+                "text": "佛系淡定，很少焦虑",
+                "score": {
+                    "turtle": 1
+                }
+            },
+            {
+                "text": "安静恬淡，看着很舒服",
+                "score": {
+                    "fish": 1
+                }
+            }
+        ]
+    },
+    {
+        "q": "你能接受每天专门花时间陪它玩吗？",
+        "options": [
+            {
+                "text": "想逗它说话、一来一回互动",
+                "score": {
+                    "parrot": 1
+                }
+            },
+            {
+                "text": "愿意花时间研究怎么亲近它",
+                "score": {
+                    "hedgehog": 1
+                }
+            },
+            {
+                "text": "偶尔陪玩，各自舒服就好",
+                "score": {
+                    "cat": 1
+                }
+            },
+            {
+                "text": "可以，就想亲密互动",
+                "score": {
+                    "dog": 1
+                }
+            }
+        ]
+    },
+    {
+        "q": "面对清理、异味这些琐事，你的态度是？",
+        "options": [
+            {
+                "text": "能接受定期打扫，不嫌麻烦",
+                "score": {
+                    "rabbit": 1
+                }
+            },
+            {
+                "text": "希望尽量少打理，省心为主",
+                "score": {
+                    "turtle": 1
+                }
+            },
+            {
+                "text": "清理范围固定，打理起来有规律",
+                "score": {
+                    "fish": 1
+                }
+            },
+            {
+                "text": "愿意陪它收拾，不嫌闹腾",
+                "score": {
+                    "parrot": 1
+                }
+            }
+        ]
+    },
+    {
+        "q": "你更喜欢哪种相处节奏？",
+        "options": [
+            {
+                "text": "慢热磨合，熟了才亲近",
+                "score": {
+                    "hedgehog": 1
+                }
+            },
+            {
+                "text": "若即若离，它独立我也自在",
+                "score": {
+                    "cat": 1
+                }
+            },
+            {
+                "text": "黏糊糊，随时能互动",
+                "score": {
+                    "dog": 1
+                }
+            },
+            {
+                "text": "各待各的，看看它就开心",
+                "score": {
+                    "hamster": 1
+                }
+            }
+        ]
+    },
+    {
+        "q": "家里突然来客人，你希望宠物？",
+        "options": [
+            {
+                "text": "躲在一旁观望，不凑热闹",
+                "score": {
+                    "cat": 1
+                }
+            },
+            {
+                "text": "热情迎接，一起凑热闹",
+                "score": {
+                    "dog": 1
+                }
+            },
+            {
+                "text": "待在小窝里，不被打扰",
+                "score": {
+                    "hamster": 1
+                }
+            },
+            {
+                "text": "在旁边安静待着就行",
+                "score": {
+                    "rabbit": 1
+                }
+            }
+        ]
+    },
+    {
+        "q": "你最看重宠物的哪一点？",
+        "options": [
+            {
+                "text": "长久安稳，能陪伴很多年",
+                "score": {
+                    "turtle": 1
+                }
+            },
+            {
+                "text": "好看治愈，看着就开心",
+                "score": {
+                    "fish": 1
+                }
+            },
+            {
+                "text": "聪明有回应，能来回互动",
+                "score": {
+                    "parrot": 1
+                }
+            },
+            {
+                "text": "有个性、特别，不容易撞款",
+                "score": {
+                    "hedgehog": 1
+                }
+            }
+        ]
+    },
+    {
+        "q": "你的作息更接近哪种？",
+        "options": [
+            {
+                "text": "规律早起，白天精力充沛",
+                "score": {
+                    "dog": 1
+                }
+            },
+            {
+                "text": "碎片时间，抽空照看一下",
+                "score": {
+                    "hamster": 1
+                }
+            },
+            {
+                "text": "作息柔和，节奏安稳",
+                "score": {
+                    "rabbit": 1
+                }
+            },
+            {
+                "text": "节奏慢，从来不赶时间",
+                "score": {
+                    "turtle": 1
+                }
+            }
+        ]
+    },
+    {
+        "q": "你的耐心程度如何？",
+        "options": [
+            {
+                "text": "慢慢打理环境，不急着见效",
+                "score": {
+                    "fish": 1
+                }
+            },
+            {
+                "text": "很有耐心，愿意慢慢教",
+                "score": {
+                    "parrot": 1
+                }
+            },
+            {
+                "text": "肯钻研，一点点摸清习性",
+                "score": {
+                    "hedgehog": 1
+                }
+            },
+            {
+                "text": "顺其自然，不太强求",
+                "score": {
+                    "cat": 1
+                }
+            }
+        ]
+    },
+    {
+        "q": "你希望宠物跟你“互动”吗？",
+        "options": [
+            {
+                "text": "看它小动作就很解压",
+                "score": {
+                    "hamster": 1
+                }
+            },
+            {
+                "text": "温顺陪伴，轻声细语就好",
+                "score": {
+                    "rabbit": 1
+                }
+            },
+            {
+                "text": "安静存在，不用太多回应",
+                "score": {
+                    "turtle": 1
+                }
+            },
+            {
+                "text": "安安静静游着，赏心悦目",
+                "score": {
+                    "fish": 1
+                }
+            }
+        ]
+    },
+    {
+        "q": "搬家换住处时，你更倾向？",
+        "options": [
+            {
+                "text": "能带上它，继续作伴",
+                "score": {
+                    "parrot": 1
+                }
+            },
+            {
+                "text": "安顿好它的小环境再搬",
+                "score": {
+                    "hedgehog": 1
+                }
+            },
+            {
+                "text": "跟着走，空间够就行",
+                "score": {
+                    "cat": 1
+                }
+            },
+            {
+                "text": "跟着搬家，适应新环境",
+                "score": {
+                    "dog": 1
+                }
+            }
+        ]
+    },
+    {
+        "q": "做决定时，你通常是？",
+        "options": [
+            {
+                "text": "慎重考虑长期责任",
+                "score": {
+                    "rabbit": 1
+                }
+            },
+            {
+                "text": "想清楚，求稳不冒进",
+                "score": {
+                    "turtle": 1
+                }
+            },
+            {
+                "text": "先看看口碑和造景难度",
+                "score": {
+                    "fish": 1
+                }
+            },
+            {
+                "text": "凭兴趣，喜欢就尝试",
+                "score": {
+                    "parrot": 1
+                }
+            }
+        ]
+    },
+    {
+        "q": "压力大的时候，你更需要？",
+        "options": [
+            {
+                "text": "独处一会儿，慢慢消化",
+                "score": {
+                    "hedgehog": 1
+                }
+            },
+            {
+                "text": "安静陪伴，各待各的",
+                "score": {
+                    "cat": 1
+                }
+            },
+            {
+                "text": "被主动安慰、热闹一下",
+                "score": {
+                    "dog": 1
+                }
+            },
+            {
+                "text": "看看可爱的小东西解压",
+                "score": {
+                    "hamster": 1
+                }
+            }
+        ]
+    },
+    {
+        "q": "你对“掉毛、小闹腾”的容忍度？",
+        "options": [
+            {
+                "text": "有点介意，希望相对干净",
+                "score": {
+                    "cat": 1
+                }
+            },
+            {
+                "text": "能包容，爱它就接受",
+                "score": {
+                    "dog": 1
+                }
+            },
+            {
+                "text": "空间小，不希望太闹腾",
+                "score": {
+                    "hamster": 1
+                }
+            },
+            {
+                "text": "安静温顺，别太皮就好",
+                "score": {
+                    "rabbit": 1
+                }
+            }
+        ]
+    },
+    {
+        "q": "你更愿意把时间花在哪件事上？",
+        "options": [
+            {
+                "text": "打理好环境，看它安稳生活",
+                "score": {
+                    "turtle": 1
+                }
+            },
+            {
+                "text": "布置环境、造景观赏",
+                "score": {
+                    "fish": 1
+                }
+            },
+            {
+                "text": "陪它玩玩具、来回互动",
+                "score": {
+                    "parrot": 1
+                }
+            },
+            {
+                "text": "观察它的小习惯，慢慢了解",
+                "score": {
+                    "hedgehog": 1
+                }
+            }
+        ]
+    },
+    {
+        "q": "你觉得养宠最理想的状态是？",
+        "options": [
+            {
+                "text": "形影不离，彼此依赖",
+                "score": {
+                    "dog": 1
+                }
+            },
+            {
+                "text": "轻松好养，没什么负担",
+                "score": {
+                    "hamster": 1
+                }
+            },
+            {
+                "text": "细水长流，彼此信任",
+                "score": {
+                    "rabbit": 1
+                }
+            },
+            {
+                "text": "长久陪伴，安稳度日",
+                "score": {
+                    "turtle": 1
+                }
+            }
+        ]
+    },
+    {
+        "q": "用一个词形容你自己？",
+        "options": [
+            {
+                "text": "恬淡从容",
+                "score": {
+                    "fish": 1
+                }
+            },
+            {
+                "text": "活泼话多",
+                "score": {
+                    "parrot": 1
+                }
+            },
+            {
+                "text": "独立有个性",
+                "score": {
+                    "hedgehog": 1
+                }
+            },
+            {
+                "text": "安静有主见",
+                "score": {
+                    "cat": 1
+                }
+            }
+        ]
+    }
+],
+
+  results: {
+    cat: {
+      name: "治愈系猫咪",
+      sub: "独立温柔 · 默契陪伴",
+      img: "assets/cat.png",
+      tags: ["独立", "细腻", "慢热", "陪伴感强"],
+      desc: "你和猫咪格外合拍：既渴望陪伴，又需要保留各自的空间。你不喜欢过度黏腻，更欣赏那种「我在身边、互不打扰」的默契。你心思细腻，能读懂它的小情绪；它也会用蹭蹭、呼噜和安静陪伴，慢慢向你靠近。下班回家有一只小猫陪着，就是你最踏实的治愈时刻。",
+      tip: "给它准备一个能自由躲藏的安静小角落，多留一点独处空间；每天固定时间喂饭、陪玩一会儿，它会慢慢建立起对你的信任，感情也会越来越深。"
+    },
+    dog: {
+      name: "元气陪伴犬",
+      sub: "热情外向 · 忠诚互动",
+      img: "assets/dog.png",
+      tags: ["热情", "忠诚", "爱互动", "精力充沛"],
+      desc: "你是典型的「狗狗型」主人：外向、热情、有活力，愿意花时间陪伴和互动。你喜欢被需要的感觉，也享受一起散步、一起玩耍的快乐。你情绪外露、待人真诚，正好能回应狗狗直白又热烈的爱。只要你给它足够的耐心和陪伴，它会用百分百的热情回应你，成为最忠诚的生活伙伴。",
+      tip: "每天留足遛弯和运动时间，定期训练基本指令，既能消耗它的精力，也能让你们更有默契；记得做好驱虫、疫苗和日常清洁，给它稳定规律的生活节奏。"
+    },
+    hamster: {
+      name: "迷你小仓鼠",
+      sub: "轻松省心 · 软萌解压",
+      img: "assets/hamster.png",
+      tags: ["省心", "软萌", "小空间", "解压治愈"],
+      desc: "你适合饲养一只小仓鼠：预算有限、居住空间不大，却仍想拥有一份软萌的陪伴。你偏好简单省心的相处方式，看看它囤粮、跑滚轮、腮帮鼓鼓的可爱模样，就能帮你卸下一天的疲惫。它不需要你时刻陪在身边，却能用小小的身影给你满满的治愈。",
+      tip: "选择合适大小的笼子和跑轮，垫料定期更换；仓鼠夜间活跃，尽量把笼子放在不影响休息的位置。新手建议先了解常见品种习性，量力而行，不要一时冲动购入。"
+    },
+    rabbit: {
+      name: "温柔小兔子",
+      sub: "细心体贴 · 安静温顺",
+      img: "assets/rabbit.png",
+      tags: ["温柔", "细心", "安静", "长情"],
+      desc: "你温柔又有耐心，和安静温顺的兔子很匹配。你愿意花心思照顾它的饮食和居住环境，也能接受定期细致的清理。兔子性格柔和、不吵不闹，正好适合喜欢安静、又愿意长期负责的你。你们不会立刻打得火热，却会在细水长流的相处里，一点点建立起牢固的信任。",
+      tip: "兔子对饮食要求较细，需以牧草为主、搭配专用兔粮；注意定期清理居住环境、观察排便和精神状态。领养前多做功课，确认自己能接受多年的细致照料。"
+    },
+    turtle: {
+      name: "佛系小乌龟",
+      sub: "淡然从容 · 长久陪伴",
+      img: "assets/turtle.png",
+      tags: ["佛系", "省心", "长寿陪伴", "慢节奏"],
+      desc: "你节奏慢、心态稳，最适合佛系好养的小乌龟。你不追求热烈的互动，更看重细水长流的陪伴。它安静、省心、生命周期长，能陪你走过很长一段日子。你按自己的节奏生活，它也慢慢长大，这种互不催促、各自安稳的相处，最让你感到安心。",
+      tip: "准备合适的水陆环境和晒背区，注意水质清洁和水温稳定；乌龟虽长寿，也需要长期负责。饲养前了解具体品种的环境要求，避免随意放生。"
+    },
+    fish: {
+      name: "优雅小金鱼",
+      sub: "安静治愈 · 赏心悦目",
+      img: "assets/fish.png",
+      tags: ["安静", "审美在线", "解压", "观赏向"],
+      desc: "你适合养一缸观赏鱼：喜欢安静的氛围，享受布置造景、看鱼悠然游动的治愈感。你不需要宠物强烈的互动回应，赏心悦目、心情放松就足够。打理好一方小水景，既是你的爱好，也是忙碌生活里一处可以静静发呆的角落，看着鱼儿游动，心也跟着慢下来。",
+      tip: "先养好水再放鱼，控制密度、定期换水并维持过滤系统；新手从好养的常见品种入手，循序渐进，不要一次性购入太多。"
+    },
+    parrot: {
+      name: "话痨小鹦鹉",
+      sub: "机灵热闹 · 互动感强",
+      img: "assets/parrot.png",
+      tags: ["机灵", "热闹", "话痨", "互动感强"],
+      desc: "你性格活泼、爱说爱笑，和机灵的小鹦鹉一拍即合。你享受有回应、有互动的相处，愿意花时间教它说话、陪它玩耍。鹦鹉聪明又热闹，会给生活添不少乐趣；它习惯群居、需要陪伴，正好匹配你愿意投入精力的性格。只要你有耐心，它会成为家里最有存在感的小话痨。",
+      tip: "鹦鹉需要较大的活动空间和每天出笼互动的时间，羽管和叫声也需要适应；饲养前确认居住环境和家人接受度，选择合法人工繁育的个体。"
+    },
+    hedgehog: {
+      name: "神秘小刺猬",
+      sub: "小众特别 · 慢热长情",
+      img: "assets/hedgehog.png",
+      tags: ["小众", "慢热", "有个性", "研究型"],
+      desc: "你有自己独特的审美，愿意研究特别的事物，适合小众又害羞的小刺猬。你不急着立刻熟络，懂得给它适应的空间，慢慢建立信任。刺猬外表带刺、内心柔软，正如慢热的你——一旦熟悉，就会展现出很黏人、很可爱的一面。你们的关系不靠热闹，而靠彼此耐心地靠近。",
+      tip: "刺猬有一定饲养门槛，对温度、饮食和环境较敏感，新手务必先做足功课；它胆子小，初期不要强行上手，留出安静环境让它慢慢适应。请通过正规渠道了解可饲养的品种，合法饲养、不弃养。"
+    }
+  }
+};
+
+/* ================= 以下为逻辑，一般不用改 ================= */
+let current = 0;
+let scores = {};
+let answers = [];
+
+function $(id) { return document.getElementById(id); }
+
+function showView(name) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  $('view-' + name).classList.add('active');
+}
+
+function startQuiz() {
+  current = 0;
+  scores = {};
+  answers = [];
+  showQuestion();
+  showView('quiz');
+}
+
+function showQuestion() {
+  const q = CONFIG.questions[current];
+  const total = CONFIG.questions.length;
+  $('stepText').textContent = (current + 1) + '/' + total;
+  $('progressBar').style.width = ((current + 1) / total * 100) + '%';
+  $('questionText').textContent = q.q;
+
+  const chosenKey = answers[current] ? Object.keys(answers[current])[0] : null;
+  const box = $('optionsBox');
+  box.innerHTML = '';
+  q.options.forEach((opt, i) => {
+    const el = document.createElement('button');
+    el.className = 'option';
+    const optKey = Object.keys(opt.score)[0];
+    if (chosenKey === optKey) el.classList.add('selected');
+    el.innerHTML = '<span class="key"></span><span>' + opt.text + '</span>';
+    el.onclick = () => selectOption(i, opt.score);
+    box.appendChild(el);
+  });
+  updateNav();
+}
+
+function selectOption(i, score) {
+  answers[current] = score;
+  document.querySelectorAll('.option').forEach((el, idx) => el.classList.toggle('selected', idx === i));
+  updateNav();
+  if (current < CONFIG.questions.length - 1) setTimeout(nextQuestion, 200);
+}
+
+function updateNav() {
+  const total = CONFIG.questions.length;
+  $('prevBtn').disabled = current === 0;
+  $('nextBtn').disabled = !answers[current];
+  $('nextBtn').textContent = current === total - 1 ? '查看结果' : '下一题';
+}
+
+function nextQuestion() {
+  if (!answers[current]) return;
+  if (current < CONFIG.questions.length - 1) {
+    current++;
+    showQuestion();
+  } else {
+    calcResult();
+    showResult();
+  }
+}
+
+function prevQuestion() {
+  if (current > 0) { current--; showQuestion(); }
+}
+
+function calcResult() {
+  scores = {};
+  answers.forEach(score => {
+    for (const k in score) scores[k] = (scores[k] || 0) + score[k];
+  });
+}
+
+function showResult() {
+  const keys = Object.keys(CONFIG.results);
+  let max = -1;
+  keys.forEach(k => { const v = scores[k] || 0; if (v > max) max = v; });
+  const top = keys.filter(k => (scores[k] || 0) === max);
+  const best = top[Math.floor(Math.random() * top.length)];
+  const r = CONFIG.results[best];
+  $('resImg').src = r.img;
+  $('resImg').alt = r.name;
+  $('resName').textContent = r.name;
+  $('resSub').textContent = r.sub;
+  $('resDesc').textContent = r.desc;
+  $('resTip').textContent = r.tip;
+  const tagsBox = $('resTags');
+  tagsBox.innerHTML = '';
+  r.tags.forEach(t => {
+    const tag = document.createElement('span');
+    tag.className = 'tag';
+    tag.textContent = t;
+    tagsBox.appendChild(tag);
+  });
+  showView('result');
+}
+
+function restart() { startQuiz(); }
+
+async function saveImage() {
+  if (typeof html2canvas === 'undefined') { alert('组件加载中，请稍后再试'); return; }
+  const card = document.querySelector('.result-card');
+  const W = card.offsetWidth;
+
+  // 离屏克隆一张固定宽度、白底、无阴影无圆角的卡片，避免页面 flex 居中/动画导致截偏
+  const holder = document.createElement('div');
+  holder.style.cssText = `position:fixed; left:-99999px; top:0; width:${W}px; background:#fff;`;
+  const clone = card.cloneNode(true);
+  clone.style.boxShadow = 'none';
+  clone.style.borderRadius = '0';
+  clone.style.marginTop = '0';
+  clone.style.transform = 'none';
+  holder.appendChild(clone);
+  document.body.appendChild(holder);
+
+  try {
+    const canvas = await html2canvas(holder, {
+      backgroundColor: '#ffffff',
+      scale: 2,
+      useCORS: true,
+      logging: false,
+      width: W,
+      windowWidth: W
+    });
+    const url = canvas.toDataURL('image/png');
+    $('previewImg').src = url;
+    $('previewMask').classList.add('active');
+  } catch (e) {
+    alert('截图失败，可长按结果页手动保存');
+  } finally {
+    document.body.removeChild(holder);
+  }
+}
+
+function closePreview() {
+  $('previewMask').classList.remove('active');
+}
+</script>
+</body>
+</html>
